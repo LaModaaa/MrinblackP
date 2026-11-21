@@ -1,9 +1,9 @@
 // Настройки сайта Mr in Black PARFUM. Меняются здесь, код трогать не нужно.
 window.SHOP_CONFIG = {
   // Ссылка на опубликованную Google Таблицу с ароматами (формат CSV).
-  // Пока пусто – ароматы берутся из файла products.csv.
+  // Если пусто – ароматы берутся из файла products.csv.
   // Как получить: Файл → Поделиться → Опубликовать в интернете → лист, «Формат CSV» → Опубликовать.
-  sheetCsvUrl: "",
+  sheetCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSH1Ohl089MA0yaHi1Qbxh1z6nnDRSeaYo_CfuGMF1C4jxVQSmpG1524hJNHW4-w9bT9IhSOg7J8YAA/pub?gid=0&single=true&output=csv",
 
   phone: "+79324045064",
   phoneText: "+7 (932) 404-50-64",
