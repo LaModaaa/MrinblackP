@@ -30,6 +30,7 @@
     sync: function (list, catalog) {
       var removed = [], changed = false;
       var next = list.filter(function (it) {
+        if (it.all) return true; // аромат из «Всего ассортимента» – его нет в таблице, сверять нечего
         var c = catalog.find(function (x) { return x.name === it.name; });
         if (!c) { removed.push(it.name); return false; }
         if (c.price !== it.price) { it.price = c.price; changed = true; }
@@ -61,7 +62,7 @@
     add: function (p) {
       var it = find(p.name);
       if (it) it.qty++;
-      else list.push({ name: p.name, price: Number(p.price) || 0, qty: 1 });
+      else list.push(p.all ? { name: p.name, price: Number(p.price) || 0, qty: 1, all: true } : { name: p.name, price: Number(p.price) || 0, qty: 1 });
       changed();
       bump();
       toast("Добавили: " + p.name);
@@ -172,9 +173,33 @@
     $(".send-call").href = "tel:" + (cfg.phone || "");
     $(".pay").hidden = !cfg.payLink;
     if (cfg.payLink) $(".pay").href = cfg.payLink;
+    if (cfg.ordersUrl) sendAuto(f);
     closeDrawer();
     dlg.showModal();
   });
+
+  // Заказ сам уходит владельцу (Google-скрипт → лист «Заказы» + Telegram-бот). Токен бота живёт в скрипте, не здесь.
+  function sendAuto(f) {
+    var title = $(".done h2"), lead = $(".done .lead");
+    title.textContent = "Отправляем заказ…";
+    lead.textContent = "Секунду…";
+    var payload = {
+      text: lastText, name: f.name, phone: f.phone, how: f.how, address: f.address, comment: f.comment,
+      total: CartCore.totalText(list), website: form.elements.website.value,
+      items: list.map(function (it) { return it.name + " – " + it.qty + " шт"; }).join("; "),
+    };
+    // no-cors: ответ скрипта прочитать нельзя, но сам запрос доходит; ошибка будет только если нет сети
+    fetch(cfg.ordersUrl, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) })
+      .then(function () {
+        title.textContent = "Заказ отправлен!";
+        lead.textContent = "Мы получили ваш заказ и скоро свяжемся с вами, чтобы подтвердить наличие и цену. Если хотите – продублируйте его нам в Telegram.";
+        list = []; changed();
+      })
+      .catch(function () {
+        title.textContent = "Заказ почти оформлен!";
+        lead.textContent = "Не получилось отправить автоматически. Мы скопировали текст заказа – отправьте его нам в Telegram или позвоните.";
+      });
+  }
   $(".copy-again").addEventListener("click", function () { copy(lastText); toast("Текст заказа скопирован"); });
   $(".done .close").addEventListener("click", function () { dlg.close(); });
 

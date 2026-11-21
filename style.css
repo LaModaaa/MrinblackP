@@ -193,6 +193,8 @@ h2 { font: 500 clamp(34px, 5.4vw, 64px)/1.05 var(--serif); letter-spacing: -.01e
 .how-get { border: 0; display: grid; gap: 8px; }
 .how-get label { display: flex; gap: 8px; align-items: center; color: var(--ivory); }
 .how-get input { accent-color: var(--gold); }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.done .lead { font: inherit; max-width: none; }
 .form-error { color: #ff8a7a; font-size: 14px; min-height: 1px; }
 .done { margin: auto; width: min(520px, 100% - 32px); max-height: calc(100% - 32px); padding: 32px 26px 24px; border-radius: var(--r); border: 1px solid var(--line); background: var(--bg2); color: var(--ivory); }
 .done::backdrop { background: rgba(0, 0, 0, .7); }
@@ -293,6 +295,10 @@ h2 { font: 500 clamp(34px, 5.4vw, 64px)/1.05 var(--serif); letter-spacing: -.01e
   .q-opts, .q-opts.five { grid-template-columns: 1fr 1fr; gap: 10px; }
   .q-opt { padding: 16px 14px; }
   .q-opts.five .q-opt:last-child { grid-column: 1 / -1; }
+  .hero-search { padding-left: 40px; } .hero-search svg { left: 14px; }
+  .hero-search .btn { padding: 10px 14px; }
+  .brand-list { grid-template-columns: 1fr 1fr; max-height: 280px; }
+  .letter { min-width: 34px; height: 36px; padding: 0 7px; }
   .q-opt b { font-size: 21px; }
   .q-item { grid-template-columns: 90px 1fr; }
   .layer h3 { font-size: 25px; }
@@ -319,6 +325,32 @@ h2 { font: 500 clamp(34px, 5.4vw, 64px)/1.05 var(--serif); letter-spacing: -.01e
   .timer { width: 100%; gap: 6px; } .timer div { flex: 1; min-width: 0; } .timer b { font-size: 30px; }
   .batch .btn { width: 100%; }
 }
+
+/* поиск на первом экране */
+.hero-search { position: relative; display: flex; align-items: center; width: min(560px, 100%); padding: 6px 6px 6px 46px; border-radius: 999px;
+  background: rgba(20, 18, 16, .85); border: 1px solid rgba(230, 191, 120, .5); box-shadow: 0 10px 40px -10px rgba(0, 0, 0, .8), 0 0 0 6px rgba(230, 191, 120, .06); }
+.hero-search svg { position: absolute; left: 18px; width: 18px; height: 18px; color: var(--gold); }
+.hero-search input { flex: 1; min-width: 0; padding: 10px 6px; background: none; border: 0; color: var(--ivory); font: inherit; outline: none; }
+.hero-search input::placeholder { color: var(--muted); }
+.hero-search:focus-within { border-color: var(--gold); }
+
+/* весь ассортимент */
+.all { padding: 20px 0 110px; }
+.all-lead { color: var(--muted); max-width: 640px; margin: -18px 0 24px; }
+.all-lead b { color: var(--gold); }
+.all-search { display: block; max-width: 640px; margin-bottom: 18px; }
+.all-search input { padding-block: 16px; font-size: 17px; border-color: rgba(230, 191, 120, .45); }
+.letters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.letter { min-width: 40px; height: 40px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--line); font-weight: 700; color: var(--muted); transition: background .2s, color .2s; }
+.letter:hover, .letter[aria-pressed="true"] { background: var(--goldgrad); color: #1a1208; border-color: transparent; }
+.brand-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 6px; max-height: 340px; overflow: auto; padding: 4px; margin-bottom: 18px;
+  border: 1px solid var(--line); border-radius: var(--r); scrollbar-color: var(--gold2) transparent; }
+.brand-btn { display: flex; justify-content: space-between; gap: 8px; padding: 9px 12px; border-radius: 10px; text-align: left; font-size: 14px; }
+.brand-btn small { color: var(--muted); }
+.brand-btn:hover, .brand-btn.on { background: rgba(230, 191, 120, .12); color: var(--gold); }
+.all-status { color: var(--muted); margin-bottom: 16px; min-height: 1.6em; }
+.vol { margin-top: 8px; width: 100%; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ivory); font: inherit; font-size: 14px; }
+.all-grid .photo img { width: 86%; height: 86%; }
 
 @media (max-width: 860px), (hover: none) {
   /* на телефоне без размытия под шапкой и без тени у логотипа – они дорого перерисовываются */

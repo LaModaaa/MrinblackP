@@ -25,4 +25,8 @@ assert.deepStrictEqual(r.removed, ["Old"]);
 assert.strictEqual(r.list[0].price, 120);
 assert.strictEqual(r.changed, true);
 assert.strictEqual(C.sync([{ name: "A", price: 120, qty: 1 }], [{ name: "A", price: 120 }]).changed, false);
+// Аромат из «Всего ассортимента» не выкидывается, хотя в таблице его нет
+const r2 = C.sync([{ name: "Lattafa Khamrah · 100 мл", price: 0, qty: 1, all: true }], []);
+assert.strictEqual(r2.list.length, 1);
+assert.strictEqual(r2.changed, false);
 console.log("sync ok");

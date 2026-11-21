@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=5">
+<link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
 
@@ -22,7 +22,7 @@
   <nav class="nav">
     <a href="#formats">Разлив</a>
     <a href="#quiz">Подбор</a>
-    <a href="#catalog">Каталог</a>
+    <a href="#all">Весь каталог</a>
     <a href="#how">Как заказать</a>
     <a href="#contacts">Контакты</a>
   </nav>
@@ -60,8 +60,13 @@
         <span class="fleur" aria-hidden="true">⚜</span>
       </h1>
       <p class="lead">Оригинальный парфюмерный магазин <em>на разлив и под заказ</em></p>
+      <form class="hero-search" role="search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m16 16 4.5 4.5" stroke="currentColor" stroke-width="1.6"/></svg>
+        <input type="search" name="q" placeholder="Найти аромат: Tom Ford, Baccarat, шанель…" aria-label="Поиск по всему ассортименту" autocomplete="off">
+        <button class="btn small" type="submit">Найти</button>
+      </form>
       <div class="btns">
-        <a class="btn magnetic" href="#catalog">Выбрать аромат</a>
+        <a class="btn magnetic" href="#all">Весь ассортимент</a>
         <a class="btn ghost magnetic" href="#quiz">Подобрать за 3 вопроса</a>
       </div>
     </div>
@@ -220,8 +225,8 @@
   <!-- Каталог -->
   <section class="catalog" id="catalog">
     <div class="wrap">
-      <p class="kicker">каталог</p>
-      <h2 class="split">Найдите свой аромат</h2>
+      <p class="kicker">популярное</p>
+      <h2 class="split">Хиты и разлив</h2>
       <div class="filters">
         <div class="tabs" id="tabs" role="group" aria-label="Раздел"></div>
         <label class="search">
@@ -231,9 +236,26 @@
       </div>
       <div class="chips" id="chips" role="group" aria-label="Для кого"></div>
       <div class="grid" id="grid"><p class="empty">Загружаем каталог…</p></div>
+    </div>
+  </section>
+
+  <!-- Весь ассортимент поставщика -->
+  <section class="all" id="all" data-v="1">
+    <div class="wrap">
+      <p class="kicker">весь ассортимент под заказ</p>
+      <h2 class="split">Более 26 000 ароматов</h2>
+      <p class="all-lead"><b data-all-count>26 000+</b> ароматов от <b data-brand-count>1 600</b> брендов – выберите бренд или найдите по названию. Цену и наличие подтвердим в ответ на заказ.</p>
+      <label class="search all-search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m16 16 4.5 4.5" stroke="currentColor" stroke-width="1.6"/></svg>
+        <input type="search" placeholder="Бренд или аромат, можно по-русски" aria-label="Поиск по всему ассортименту" autocomplete="off">
+      </label>
+      <div class="letters" role="group" aria-label="Бренды по первой букве"></div>
+      <div class="brand-list" hidden></div>
+      <p class="all-status" role="status"></p>
+      <div class="grid all-grid"></div>
       <div class="notfound">
         <p>Не нашли свой аромат?</p>
-        <a class="btn ghost tg-link" href="https://t.me/shuhrat2401" target="_blank" rel="noopener">Напишите – привезём под заказ</a>
+        <a class="btn ghost tg-link" href="https://t.me/shuhrat2401" target="_blank" rel="noopener">Напишите – найдём у поставщиков</a>
       </div>
     </div>
   </section>
@@ -300,6 +322,7 @@
       </fieldset>
       <label class="addr" hidden>Адрес доставки<input name="address" autocomplete="street-address"></label>
       <label>Комментарий<textarea name="comment" rows="2" placeholder="Например: подскажите похожий аромат"></textarea></label>
+      <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
       <p class="form-error" role="alert"></p>
       <button class="btn wide" type="submit">Оформить заказ</button>
       <p class="consent">Нажимая «Оформить заказ», вы соглашаетесь на обработку персональных данных по <a href="policy.html" target="_blank">политике конфиденциальности</a>.</p>
@@ -309,7 +332,7 @@
 
 <dialog class="done">
   <h2>Заказ почти оформлен!</h2>
-  <p>Мы скопировали текст заказа. Отправьте его нам в Telegram – просто вставьте в сообщение – или позвоните.</p>
+  <p class="lead">Мы скопировали текст заказа. Отправьте его нам в Telegram – просто вставьте в сообщение – или позвоните.</p>
   <pre class="order-text"></pre>
   <div class="btns">
     <a class="btn send-tg" target="_blank" rel="noopener">Отправить в Telegram</a>
@@ -323,13 +346,14 @@
 <canvas class="fx" aria-hidden="true"></canvas>
 <div class="toast" role="status" aria-live="polite"></div>
 
-<script src="config.js?v=4"></script>
-<script src="cart.js?v=2"></script>
+<script src="config.js?v=5"></script>
+<script src="cart.js?v=6"></script>
 <script src="catalog.js?v=2"></script>
 <script src="quiz.js?v=2"></script>
 <script src="batch.js?v=3"></script>
+<script src="allcat.js?v=1"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-<script src="app.js?v=5"></script>
+<script src="app.js?v=6"></script>
 </body>
 </html>

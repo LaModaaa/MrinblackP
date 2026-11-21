@@ -9,6 +9,10 @@ window.SHOP_CONFIG = {
   phoneText: "+7 (932) 404-50-64",
   telegram: "https://t.me/shuhrat2401",
 
+  // Адрес Google-скрипта, который принимает заказы (лист «Заказы» + сообщение в Telegram от бота).
+  // Пока пусто – покупатель сам отправляет скопированный заказ в Telegram.
+  ordersUrl: "https://script.google.com/macros/s/AKfycbySmZYAskYFSXH87halpvzXKbNA8m8_C8X2mfucn9rh2YzSU5vXY4WpNbkfWuz-5T9t/exec",
+
   // Сбор заказов под заказ раз в неделю: когда закрывается (день: 0 – вс, 1 – пн, 2 – вт … 6 – сб).
   // utcOffset: 5 – время Сургута. Чтобы убрать таймер с сайта, напишите batch: null.
   batch: { day: 2, hour: 23, minute: 59, utcOffset: 5 },
