@@ -2,6 +2,8 @@
 (function () {
   var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   var fine = matchMedia("(pointer: fine)").matches;
+  // Телефон: тяжёлые эффекты (SVG-размытие, фильтры, бегущий блик) упрощаем, чтобы не лагало
+  var lite = !fine || matchMedia("(max-width: 860px)").matches;
   var cfg = window.SHOP_CONFIG || {};
   var $ = function (s) { return document.querySelector(s); };
   var $$ = function (s) { return [].slice.call(document.querySelectorAll(s)); };
@@ -54,17 +56,21 @@
   intro.from(".pre-logo span", { yPercent: 60, opacity: 0, duration: .9, ease: "power3.out" })
     .from(".pre-logo small", { letterSpacing: "1.4em", opacity: 0, duration: .9, ease: "power2.out" }, "-=.5")
     .to(".preloader", { opacity: 0, duration: .6, onComplete: function () { $(".preloader").remove(); } }, "+=.25")
-    .from(".bm-top", { yPercent: 40, opacity: 0, filter: "blur(12px)", duration: 1.2, ease: "power3.out" }, "-=.3")
+    .from(".bm-top", lite ? { yPercent: 40, opacity: 0, duration: 1.2, ease: "power3.out" } : { yPercent: 40, opacity: 0, filter: "blur(12px)", duration: 1.2, ease: "power3.out" }, "-=.3")
     .from(".bm-sub i", { scaleX: 0, duration: .9, ease: "power2.out" }, "-=.7")
     .from(".bm-sub", { letterSpacing: "1.2em", opacity: 0, duration: 1 }, "<")
     .from(".fleur", { scale: 0, rotate: -90, opacity: 0, duration: .7, ease: "back.out(2)" }, "-=.5")
     .from(".eyebrow, .lead, .hero .btns", { y: 24, opacity: 0, stagger: .12, duration: .7 }, "-=.4");
 
   // Золотой отблеск бежит по логотипу
-  gsap.to(".bm-top", { backgroundPosition: "200% 0", duration: 6, ease: "none", repeat: -1 });
+  if (!lite) gsap.to(".bm-top", { backgroundPosition: "200% 0", duration: 6, ease: "none", repeat: -1 });
 
-  // Дым: линии рисуются и медленно плывут
-  $$(".smoke path").forEach(function (p, i) {
+  // Дым: на ПК линии рисуются и плывут по отдельности; на телефоне дым статичный
+  // и плывёт целиком – так размытие считается один раз, а двигает его видеокарта
+  if (lite) {
+    gsap.from(".smoke", { opacity: 0, duration: 2, delay: 1.4 });
+    gsap.to(".smoke", { x: 18, duration: 6, yoyo: true, repeat: -1, ease: "sine.inOut" });
+  } else $$(".smoke path").forEach(function (p, i) {
     var len = p.getTotalLength();
     gsap.set(p, { strokeDasharray: len, strokeDashoffset: len });
     gsap.to(p, { strokeDashoffset: 0, duration: 3.2, delay: 1.6 + (i % 4) * .25, ease: "power2.inOut" });
@@ -124,7 +130,7 @@
   pyr.to(".l3", { scaleY: 1, ease: "none" }).to(".l2", { scaleY: 1, ease: "none" }).to(".l1", { scaleY: 1, ease: "none" })
     .to(".cap", { y: -10, ease: "power1.inOut" }, "-=.4");
   gsap.to(".bubbles circle", { y: -200, opacity: 0, duration: 3, stagger: { each: .5, repeat: -1 }, ease: "power1.in" });
-  gsap.to(".bottle-glow", { scale: 1.15, opacity: .7, duration: 2.5, yoyo: true, repeat: -1, ease: "sine.inOut" });
+  if (!lite) gsap.to(".bottle-glow", { scale: 1.15, opacity: .7, duration: 2.5, yoyo: true, repeat: -1, ease: "sine.inOut" });
 
   // Цитата: слова загораются по одному, последние – золотом
   var qt = $(".q-text");
@@ -166,12 +172,12 @@
   });
 
   // Эффекты на одном холсте: золотая пыль на первом экране, дымный след курсора, «пшик» при покупке
-  var cv = $(".fx"), ctx = cv.getContext("2d"), dpr = Math.min(devicePixelRatio || 1, 2), W, H;
+  var cv = $(".fx"), ctx = cv.getContext("2d"), dpr = lite ? 1 : Math.min(devicePixelRatio || 1, 2), W, H, dirty = true;
   function size() { W = innerWidth; H = innerHeight; cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
   size(); addEventListener("resize", size);
   var parts = [], rnd = function (a, b) { return a + Math.random() * (b - a); };
   var dust = [];
-  for (var i = 0; i < (fine ? 70 : 35); i++) dust.push({ x: rnd(0, 1), y: rnd(0, 1), r: rnd(.6, 2.2), s: rnd(.00015, .0006), t: rnd(0, 6.28) });
+  for (var i = 0; i < (lite ? 18 : 70); i++) dust.push({ x: rnd(0, 1), y: rnd(0, 1), r: rnd(.6, 2.2), s: rnd(.00015, .0006), t: rnd(0, 6.28) });
 
   // kind: 0 – дым (растёт и тает), 1 – капля спрея (летит и гаснет)
   function puff(x, y, kind, vx, vy) { parts.push({ x: x, y: y, vx: vx, vy: vy, life: 0, max: kind ? rnd(35, 60) : rnd(40, 70), r: kind ? rnd(1, 2.6) : rnd(6, 12), kind: kind }); }
@@ -186,8 +192,11 @@
   (function loop(t) {
     requestAnimationFrame(loop);
     if (document.hidden) return;
-    ctx.clearRect(0, 0, W, H);
     var heroFade = Math.max(0, 1 - scrollY / H);
+    // нечего рисовать – холст не трогаем
+    if (!heroFade && !parts.length) { if (dirty) { ctx.clearRect(0, 0, W, H); dirty = false; } return; }
+    dirty = true;
+    ctx.clearRect(0, 0, W, H);
     if (heroFade > 0) dust.forEach(function (d) {
       d.y -= d.s; if (d.y < -.02) { d.y = 1.02; d.x = rnd(0, 1); }
       var tw = .35 + .65 * Math.abs(Math.sin(t / 900 + d.t));

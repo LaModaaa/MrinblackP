@@ -319,6 +319,13 @@ h2 { font: 500 clamp(34px, 5.4vw, 64px)/1.05 var(--serif); letter-spacing: -.01e
   .batch .btn { width: 100%; }
 }
 
+@media (max-width: 860px), (hover: none) {
+  /* на телефоне без размытия под шапкой и без тени у логотипа – они дорого перерисовываются */
+  .header { backdrop-filter: none; background: rgba(11, 10, 9, .96); }
+  .overlay { backdrop-filter: none; }
+  .bm-top { filter: none; }
+  .smoke { will-change: transform; }
+}
 @media (max-width: 860px) {
   .nav { display: none; }
   .header { justify-content: space-between; }
