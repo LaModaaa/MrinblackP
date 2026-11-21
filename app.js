@@ -3,7 +3,7 @@
   var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   var fine = matchMedia("(pointer: fine)").matches;
   // Телефон: тяжёлые эффекты (SVG-размытие, фильтры, бегущий блик) упрощаем, чтобы не лагало
-  var lite = !fine || matchMedia("(max-width: 860px)").matches;
+  var lite = matchMedia("(max-width: 860px), (hover: none)").matches; // то же условие, что в style.css
   var cfg = window.SHOP_CONFIG || {};
   var $ = function (s) { return document.querySelector(s); };
   var $$ = function (s) { return [].slice.call(document.querySelectorAll(s)); };
@@ -52,13 +52,15 @@
   }
 
   // Прелоадер → логотип на первом экране
+  // На телефоне двигаем только transform и opacity: разрядка букв (letterSpacing) и blur
+  // заставляют браузер пересчитывать текст в каждом кадре – отсюда и лаги
   var intro = gsap.timeline();
   intro.from(".pre-logo span", { yPercent: 60, opacity: 0, duration: .9, ease: "power3.out" })
-    .from(".pre-logo small", { letterSpacing: "1.4em", opacity: 0, duration: .9, ease: "power2.out" }, "-=.5")
+    .from(".pre-logo small", lite ? { y: 12, opacity: 0, duration: .8, ease: "power2.out" } : { letterSpacing: "1.4em", opacity: 0, duration: .9, ease: "power2.out" }, "-=.5")
     .to(".preloader", { opacity: 0, duration: .6, onComplete: function () { $(".preloader").remove(); } }, "+=.25")
     .from(".bm-top", lite ? { yPercent: 40, opacity: 0, duration: 1.2, ease: "power3.out" } : { yPercent: 40, opacity: 0, filter: "blur(12px)", duration: 1.2, ease: "power3.out" }, "-=.3")
     .from(".bm-sub i", { scaleX: 0, duration: .9, ease: "power2.out" }, "-=.7")
-    .from(".bm-sub", { letterSpacing: "1.2em", opacity: 0, duration: 1 }, "<")
+    .from(".bm-sub", lite ? { y: 14, opacity: 0, duration: .9 } : { letterSpacing: "1.2em", opacity: 0, duration: 1 }, "<")
     .from(".fleur", { scale: 0, rotate: -90, opacity: 0, duration: .7, ease: "back.out(2)" }, "-=.5")
     .from(".eyebrow, .lead, .hero .btns", { y: 24, opacity: 0, stagger: .12, duration: .7 }, "-=.4");
 
@@ -67,16 +69,17 @@
 
   // Дым: на ПК линии рисуются и плывут по отдельности; на телефоне дым статичный
   // и плывёт целиком – так размытие считается один раз, а двигает его видеокарта
+  var smoke = lite ? ".smoke-img" : ".smoke"; // на телефоне дым – готовая картинка, её двигать дёшево
   if (lite) {
-    gsap.from(".smoke", { opacity: 0, duration: 2, delay: 1.4 });
-    gsap.to(".smoke", { x: 18, duration: 6, yoyo: true, repeat: -1, ease: "sine.inOut" });
+    gsap.from(smoke, { opacity: 0, duration: 2, delay: 1.4 });
+    gsap.to(smoke, { x: 14, duration: 6, yoyo: true, repeat: -1, ease: "sine.inOut" });
   } else $$(".smoke path").forEach(function (p, i) {
     var len = p.getTotalLength();
     gsap.set(p, { strokeDasharray: len, strokeDashoffset: len });
     gsap.to(p, { strokeDashoffset: 0, duration: 3.2, delay: 1.6 + (i % 4) * .25, ease: "power2.inOut" });
     gsap.to(p, { x: i % 2 ? 30 : -30, y: i % 2 ? -20 : 20, duration: 7 + i, yoyo: true, repeat: -1, ease: "sine.inOut" });
   });
-  gsap.to(".smoke", { yPercent: 18, opacity: .2, ease: "none", scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: true } });
+  gsap.to(smoke, { yPercent: 18, opacity: .2, ease: "none", scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: true } });
   gsap.to(".hero-in", { yPercent: -14, opacity: 0, ease: "none", scrollTrigger: { trigger: ".hero", start: "40% top", end: "bottom top", scrub: true } });
 
   // Бегущая строка ускоряется от прокрутки
@@ -113,8 +116,7 @@
   // Карточки каталога выезжают при каждой перерисовке
   document.addEventListener("catalog:render", function () {
     gsap.from("#grid .card", { y: 40, opacity: 0, duration: .6, stagger: .05, ease: "power2.out", clearProps: "all" });
-    ScrollTrigger.refresh();
-  });
+  }); // пересчёт позиций сделает ResizeObserver ниже
 
   // Флакон наполняется слоями: база → сердце → верх, текст подсвечивается в такт
   var layers = $$(".layer");
@@ -177,7 +179,7 @@
   size(); addEventListener("resize", size);
   var parts = [], rnd = function (a, b) { return a + Math.random() * (b - a); };
   var dust = [];
-  for (var i = 0; i < (lite ? 18 : 70); i++) dust.push({ x: rnd(0, 1), y: rnd(0, 1), r: rnd(.6, 2.2), s: rnd(.00015, .0006), t: rnd(0, 6.28) });
+  for (var i = 0; i < (lite ? 0 : 70); i++) dust.push({ x: rnd(0, 1), y: rnd(0, 1), r: rnd(.6, 2.2), s: rnd(.00015, .0006), t: rnd(0, 6.28) });
 
   // kind: 0 – дым (растёт и тает), 1 – капля спрея (летит и гаснет)
   function puff(x, y, kind, vx, vy) { parts.push({ x: x, y: y, vx: vx, vy: vy, life: 0, max: kind ? rnd(35, 60) : rnd(40, 70), r: kind ? rnd(1, 2.6) : rnd(6, 12), kind: kind }); }
@@ -192,8 +194,8 @@
   (function loop(t) {
     requestAnimationFrame(loop);
     if (document.hidden) return;
-    var heroFade = Math.max(0, 1 - scrollY / H);
-    // нечего рисовать – холст не трогаем
+    var heroFade = dust.length ? Math.max(0, 1 - scrollY / H) : 0;
+    // нечего рисовать – холст не трогаем (на телефоне так почти всегда: только «пшик»)
     if (!heroFade && !parts.length) { if (dirty) { ctx.clearRect(0, 0, W, H); dirty = false; } return; }
     dirty = true;
     ctx.clearRect(0, 0, W, H);
@@ -220,5 +222,8 @@
     ctx.globalAlpha = 1;
   })(0);
 
-  new ResizeObserver(function () { ScrollTrigger.refresh(); }).observe(document.body);
+  // Пересчёт позиций, когда страница меняет высоту (подгрузились фото, каталог) – не чаще раза в 300 мс,
+  // иначе при загрузке он запускается десятки раз подряд и тормозит заставку
+  var rt;
+  new ResizeObserver(function () { clearTimeout(rt); rt = setTimeout(function () { ScrollTrigger.refresh(); }, 300); }).observe(document.body);
 })();
