@@ -23,20 +23,6 @@
   $$('a[href^="#"]').forEach(function (a) {
     a.addEventListener("click", function (e) { if ($(a.getAttribute("href"))) { e.preventDefault(); go(a.getAttribute("href")); } });
   });
-  // «Смотреть разлив» / «Смотреть флаконы» – фильтруем каталог и едем к нему
-  $$("[data-show]").forEach(function (b) {
-    b.addEventListener("click", function () { if (window.CatalogShow) CatalogShow(b.dataset.show); go("#catalog"); });
-  });
-
-  // Сколько разных ароматов в каталоге (разлив и флакон одного аромата – один аромат)
-  function countAromas() {
-    var seen = {};
-    (window.CATALOG_ITEMS || []).forEach(function (it) { seen[it.brand + "|" + it.title] = 1; });
-    var n = Object.keys(seen).length, el = $(".why [data-count='24']") || $(".why-item:last-child b");
-    if (n && el) { el.dataset.count = n; if (!window.gsap || reduce) el.textContent = n; }
-  }
-  document.addEventListener("catalog:ready", countAromas);
-  if (window.CATALOG_ITEMS) countAromas();
 
   if (!window.gsap || !window.ScrollTrigger || reduce) {
     document.documentElement.classList.add("no-gsap");
@@ -113,11 +99,6 @@
     });
   });
 
-  // Карточки каталога выезжают при каждой перерисовке
-  document.addEventListener("catalog:render", function () {
-    gsap.from("#grid .card", { y: 40, opacity: 0, duration: .6, stagger: .05, ease: "power2.out", clearProps: "all" });
-  }); // пересчёт позиций сделает ResizeObserver ниже
-
   // Флакон наполняется слоями: база → сердце → верх, текст подсвечивается в такт
   var layers = $$(".layer");
   gsap.set(".liq", { scaleY: 0, transformOrigin: "50% 100%" });
@@ -150,7 +131,7 @@
 
   // Наклон карточки и блик за курсором (делегирование – карточки перерисовываются)
   if (fine) {
-    var grid = $("#grid"), tilted = null;
+    var grid = $(".all-grid"), tilted = null;
     grid.addEventListener("mousemove", function (e) {
       var card = e.target.closest(".card");
       if (tilted && tilted !== card) gsap.to(tilted, { rotateX: 0, rotateY: 0, duration: .5 });

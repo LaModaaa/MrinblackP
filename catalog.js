@@ -1,4 +1,5 @@
-// Каталог: ароматы из products.csv или из опубликованной Google Таблицы (основа – сайт пекарни).
+// Ароматы с ценами из Google Таблицы (или products.csv): цены для общего каталога и подбор аромата.
+// Отдельный блок «Хиты» с сайта убран – сетка рисуется, только если на странице есть #grid.
 (function () {
   var cfg = window.SHOP_CONFIG || {};
   var SHEET_URL = (cfg.sheetCsvUrl || "").trim();
@@ -112,6 +113,7 @@
   }
 
   function render() {
+    if (!grid) return; // блока с сеткой на странице нет – таблица нужна только ради цен и подбора
     buttons(tabs, uniq("section"), section, function (v) { section = v; });
     buttons(chips, uniq("sex"), sex, function (v) { sex = v; });
     grid.innerHTML = "";
@@ -154,6 +156,7 @@
   }
 
   document.addEventListener("cart:change", function () {
+    if (!grid) return;
     var cards = grid.querySelectorAll(".card"), list = visible();
     cards.forEach(function (c, i) { if (list[i]) c.querySelector(".buy").replaceWith(buyBox(list[i])); });
   });
@@ -177,7 +180,7 @@
         var cached = null;
         try { cached = JSON.parse(localStorage.getItem(CACHE_KEY) || "null"); } catch (e) {}
         if (cached && cached.length) { items = cached; render(); ready(); }
-        else grid.innerHTML = '<p class="empty">Не удалось загрузить каталог. Напишите нам в Telegram – подскажем, что есть.</p>';
+        else if (grid) grid.innerHTML = '<p class="empty">Не удалось загрузить каталог. Напишите нам в Telegram – подскажем, что есть.</p>';
       });
   }
   load();

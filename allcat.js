@@ -25,13 +25,23 @@
     "уд": "oud", "роза": "rose", "блэк": "black", "блек": "black", "аль харамайн": "al haramain", "расаси": "rasasi", "аджмал": "ajmal",
     "нишан": "nishane", "аморуаж": "amouage", "амуаж": "amouage", "мансера": "mancera", "кензо": "kenzo", "бёрберри": "burberry",
     "барберри": "burberry", "лакост": "lacoste", "хуго": "hugo", "босс": "boss", "дольче": "dolce", "габбана": "gabbana",
+    "валентино": "valentino", "валентина": "valentino", "джо малон": "jo malone", "нина риччи": "nina ricci", "мюглер": "mugler",
+    "мугле": "mugler", "кельвин кляйн": "calvin klein", "кельвин": "calvin", "булгари": "bvlgari", "бвлгари": "bvlgari", "картье": "cartier",
+    "ланвин": "lanvin", "москино": "moschino", "пако рабан": "paco rabanne", "рабан": "rabanne", "жан поль готье": "jean paul gaultier",
+    "готье": "gaultier", "эскада": "escada", "хлое": "chloe", "хлоя": "chloe", "клое": "chloe", "ральф лорен": "ralph lauren",
+    "селин": "celine", "опиум": "opium", "либре": "libre", "ла ви э бель": "la vie est belle",
+    "эксцентрик": "escentric", "молекьюл": "molecule", "аква ди джо": "acqua di gio", "джорджио": "giorgio", "гивенчи": "givenchy",
+    "томми": "tommy", "хилфигер": "hilfiger", "диесел": "diesel", "дизель": "diesel", "фрэнк": "frank",
   };
   var TR = { а: "a", б: "b", в: "v", г: "g", д: "d", е: "e", ё: "e", ж: "zh", з: "z", и: "i", й: "y", к: "k", л: "l", м: "m", н: "n", о: "o",
     п: "p", р: "r", с: "s", т: "t", у: "u", ф: "f", х: "h", ц: "ts", ч: "ch", ш: "sh", щ: "sh", ы: "y", э: "e", ю: "yu", я: "ya", ь: "", ъ: "" };
   function norm(s) { return String(s).toLowerCase().replace(/ё/g, "е").replace(/[’'`´]/g, "").replace(/[^a-zа-я0-9]+/g, " ").trim(); }
   function variants(q) {
     var n = norm(q), out = [n];
-    Object.keys(RU).forEach(function (ru) { if (n.indexOf(ru) !== -1) n = n.split(ru).join(RU[ru]); });
+    // заменяем только целые слова: «уд» → oud, но «худ» не трогаем; «валентин…» – по началу слова
+    n = " " + n + " ";
+    Object.keys(RU).forEach(function (ru) { n = n.split(" " + ru + " ").join(" " + RU[ru] + " "); });
+    n = n.trim();
     if (n !== out[0]) out.push(n);
     var tr = n.replace(/[а-я]/g, function (c) { return TR[c] || ""; });
     if (out.indexOf(tr) === -1) out.push(tr);
@@ -39,6 +49,14 @@
   }
   // Каждое слово запроса должно найтись в «бренд + название + тип»
   function matches(hay, q) { return q.split(" ").every(function (w) { return hay.indexOf(w) !== -1; }); }
+  function find(vs) {
+    var out = [];
+    for (var k = 0; k < data.hay.length; k++) {
+      var h = data.hay[k];
+      if (vs.some(function (q) { return matches(h, q); })) out.push(k);
+    }
+    return out;
+  }
 
   function load() {
     if (loading) return loading;
@@ -106,14 +124,16 @@
     if (!vs[0]) { pickLetter(letter || firstLetter()); return; }
     brandBox.hidden = true;
     [].forEach.call(letters.children, function (b) { b.setAttribute("aria-pressed", "false"); });
-    list = [];
-    for (var k = 0; k < data.hay.length; k++) {
-      var h = data.hay[k];
-      if (vs.some(function (q) { return matches(h, q); })) list.push(k);
+    list = find(vs);
+    // Ничего не нашли – пробуем без окончаний: «валентина» → «valenti» найдёт Valentino
+    if (!list.length) list = find(vs.map(function (q) { return q.split(" ").map(function (w) { return w.length > 5 ? w.slice(0, w.length - 2) : w; }).join(" "); }));
+    // выше те, где запрос совпал с началом бренда или названия аромата («валентина» → сначала Valentino, а не Mario Valentino)
+    var w0 = vs[vs.length - 1].split(" ")[0].slice(0, 5);
+    function rank(k) {
+      var it = data.items[k];
+      return (norm(data.brands[it[0]][0]).indexOf(w0) === 0 ? 2 : 0) + (norm(it[1]).indexOf(w0) === 0 ? 1 : 0);
     }
-    // сначала те, где запрос совпал с началом названия аромата
-    var first = vs[vs.length > 1 ? 1 : 0];
-    list.sort(function (a, b) { return (norm(data.items[b][1]).indexOf(first) === 0) - (norm(data.items[a][1]).indexOf(first) === 0); });
+    list.sort(function (a, b) { return rank(b) - rank(a) || a - b; });
     status.textContent = list.length ? "Нашли " + list.length + " " + plural(list.length) : "Ничего не нашли. Напишите нам название – проверим у поставщиков.";
     show(true);
   }
@@ -205,10 +225,17 @@
   input.addEventListener("input", function () { clearTimeout(t); t = setTimeout(function () { query = input.value; search(); }, 250); });
 
   // Поиск с первого экрана: переносим запрос сюда
+  // Сначала грузим и ищем, потом едем к результатам: если ехать сразу, страница по дороге меняет высоту
+  // (подгружается каталог, закреплённый блок с флаконом) и прокрутка останавливается не там
   window.AllSearch = function (q) {
     input.value = q; query = q;
-    root.scrollIntoView({ behavior: "smooth" });
-    load().then(search);
+    load().then(function () {
+      search();
+      requestAnimationFrame(function () {
+        var y = root.querySelector(".all-search").getBoundingClientRect().top + scrollY - 90;
+        window.scrollTo({ top: y, behavior: Math.abs(y - scrollY) > 4000 ? "auto" : "smooth" });
+      });
+    });
   };
 
   var hero = document.querySelector(".hero-search");
