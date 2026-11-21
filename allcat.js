@@ -114,6 +114,7 @@
     [].forEach.call(brandBox.children, function (b) { b.classList.toggle("on", b === btn); });
     list = [];
     data.items.forEach(function (it, k) { if (it[0] === i) list.push(k); });
+    list.sort(function (a, b) { return hasPhoto(b) - hasPhoto(a) || a - b; }); // сначала ароматы с фото
     status.textContent = data.brands[i][0] + " – " + list.length + " " + plural(list.length);
     show(true);
     grid.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -133,11 +134,54 @@
       var it = data.items[k];
       return (norm(data.brands[it[0]][0]).indexOf(w0) === 0 ? 2 : 0) + (norm(it[1]).indexOf(w0) === 0 ? 1 : 0);
     }
-    list.sort(function (a, b) { return rank(b) - rank(a) || a - b; });
+    list.sort(function (a, b) { return rank(b) - rank(a) || hasPhoto(b) - hasPhoto(a) || a - b; });
     status.textContent = list.length ? "Нашли " + list.length + " " + plural(list.length) : "Ничего не нашли. Напишите нам название – проверим у поставщиков.";
     show(true);
   }
   function plural(n) { var m = n % 10, c = n % 100; return m === 1 && c !== 11 ? "аромат" : m >= 2 && m <= 4 && (c < 10 || c >= 20) ? "аромата" : "ароматов"; }
+
+  function hasPhoto(k) { return data.items[k][4] ? 1 : 0; }
+
+  // Фото из Google Таблицы: Шухрат может вписать свою ссылку для любого аромата (бренд + название)
+  function sheetPhoto(b, title) {
+    var key = (b + "|" + title).toLowerCase();
+    var hit = (window.CATALOG_ITEMS || []).find(function (x) { return x.photo && (x.brand + "|" + x.title).toLowerCase() === key; });
+    return hit ? hit.photo : "";
+  }
+
+  // У ~10 000 ароматов у поставщика нет фото – рисуем аккуратный флакон с этикеткой вместо пустого места.
+  // Форма и цвет флакона зависят от названия, поэтому соседние карточки выглядят по-разному.
+  var TINTS = [["#e9c58a", "#b98236"], ["#e7b3a8", "#a8574a"], ["#cfc6b6", "#6f6658"], ["#b9d3cf", "#4f7f79"], ["#d8c48a", "#8a7432"], ["#c9a3c4", "#6e4767"]];
+  var NS = "http://www.w3.org/2000/svg";
+  function svgEl(tag, attrs, text) {
+    var e = document.createElementNS(NS, tag);
+    Object.keys(attrs).forEach(function (a) { e.setAttribute(a, attrs[a]); });
+    if (text) e.textContent = text;
+    return e;
+  }
+  function bottle(ph, b, title) {
+    var h = 0;
+    for (var i = 0; i < title.length; i++) h = (h * 31 + title.charCodeAt(i)) >>> 0;
+    var t = TINTS[h % TINTS.length], shape = h % 3, id = "g" + h;
+    var svg = svgEl("svg", { viewBox: "0 0 200 240", class: "bottle-ph", "aria-hidden": "true" });
+    var defs = svgEl("defs", {}), gr = svgEl("linearGradient", { id: id, x1: "0", x2: "1" });
+    gr.append(svgEl("stop", { offset: "0", "stop-color": t[0] }), svgEl("stop", { offset: "1", "stop-color": t[1] }));
+    defs.appendChild(gr); svg.appendChild(defs);
+    var body = shape === 0 ? svgEl("rect", { x: 52, y: 78, width: 96, height: 140, rx: 14 })
+      : shape === 1 ? svgEl("ellipse", { cx: 100, cy: 152, rx: 62, ry: 66 })
+      : svgEl("rect", { x: 40, y: 92, width: 120, height: 120, rx: 22 });
+    body.setAttribute("fill", "url(#" + id + ")");
+    body.setAttribute("stroke", "rgba(0,0,0,.18)");
+    svg.append(
+      svgEl("rect", { x: 78, y: 22, width: 44, height: 34, rx: 5, fill: "#1a1612" }),
+      svgEl("rect", { x: 88, y: 56, width: 24, height: 26, fill: "#c9a35e" }),
+      body,
+      svgEl("rect", { x: 66, y: 128, width: 68, height: 50, rx: 4, fill: "rgba(255,255,255,.82)" }),
+      svgEl("text", { x: 100, y: 146, "text-anchor": "middle", class: "bp-brand" }, b.length > 16 ? b.slice(0, 15) + "…" : b),
+      svgEl("text", { x: 100, y: 166, "text-anchor": "middle", class: "bp-title" }, title.length > 14 ? title.slice(0, 13) + "…" : title)
+    );
+    ph.appendChild(svg);
+  }
 
   // Цена из Google Таблицы, если Шухрат её туда вписал (бренд + название + объём)
   function priceFor(b, title, vol) {
@@ -152,12 +196,13 @@
     var it = data.items[k], b = data.brands[it[0]][0], vols = it[3] ? it[3].split("|") : [];
     var c = el("article", "card");
     var ph = el("div", "photo");
-    if (it[4]) {
+    var src = sheetPhoto(b, it[1]) || (it[4] ? PHOTO + it[4] : "");
+    if (src) {
       var img = document.createElement("img");
-      img.src = PHOTO + it[4]; img.alt = b + " " + it[1]; img.loading = "lazy"; img.referrerPolicy = "no-referrer";
-      img.onerror = function () { ph.classList.add("noimg"); img.remove(); };
+      img.src = src; img.alt = b + " " + it[1]; img.loading = "lazy"; img.referrerPolicy = "no-referrer";
+      img.onerror = function () { img.remove(); bottle(ph, b, it[1]); };
       ph.appendChild(img);
-    } else ph.classList.add("noimg");
+    } else bottle(ph, b, it[1]);
     ph.appendChild(el("span", "tag", "Под заказ"));
     var body = el("div", "body");
     body.append(el("span", "brand", b), el("h3", "name", it[1]), el("p", "meta", it[2] + (it[5] ? " · есть тестер" : "")));
