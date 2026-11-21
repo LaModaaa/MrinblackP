@@ -1,3 +1,4 @@
 _src/
 .claude/
 __pycache__/
+_deploy/

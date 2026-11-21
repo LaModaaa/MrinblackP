@@ -145,6 +145,19 @@
     grid.addEventListener("mouseleave", function () { if (tilted) gsap.to(tilted, { rotateX: 0, rotateY: 0, duration: .5 }); tilted = null; });
   }
 
+  // Купон наклоняется за курсором, как в барбершопе
+  var coupon = $(".coupon");
+  if (coupon && fine) {
+    coupon.addEventListener("pointermove", function (e) {
+      var r = coupon.getBoundingClientRect();
+      coupon.style.setProperty("--ry", ((e.clientX - r.left) / r.width - .5) * 8 + "deg");
+      coupon.style.setProperty("--rx", ((e.clientY - r.top) / r.height - .5) * -8 + "deg");
+    });
+    coupon.addEventListener("pointerleave", function () { coupon.style.setProperty("--rx", "0deg"); coupon.style.setProperty("--ry", "0deg"); });
+  }
+  gsap.from(".coupon", { y: 50, opacity: 0, rotate: -2, duration: 1, ease: "power3.out", clearProps: "transform", scrollTrigger: { trigger: ".coupon", start: "top 85%" } });
+  gsap.from(".coupon__value", { scale: .6, opacity: 0, duration: 1, delay: .2, ease: "back.out(1.6)", scrollTrigger: { trigger: ".coupon", start: "top 85%" } });
+
   // Кнопки слегка тянутся за курсором
   if (fine) $$(".magnetic").forEach(function (b) {
     b.addEventListener("mousemove", function (e) {
