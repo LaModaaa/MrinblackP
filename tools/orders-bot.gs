@@ -41,7 +41,6 @@ function findChatIds() {
   });
 }
 
-// Обрезаем длину; текст, начинающийся с = + - @, таблица приняла бы за формулу – экранируем апострофом
 // Проверка бота: шлёт «Проверка бота» на первый номер из CHAT_IDS и пишет в журнал ответ Telegram.
 function testSend() {
   var p = PropertiesService.getScriptProperties();
@@ -52,5 +51,6 @@ function testSend() {
   Logger.log(r.getContentText());
 }
 
+// Обрезаем длину; текст, начинающийся с = + - @, таблица приняла бы за формулу – экранируем апострофом
 function cut(v, n) { var s = String(v == null ? "" : v).slice(0, n || 300); return /^[=+\-@]/.test(s) ? "'" + s : s; }
 function out(s) { return ContentService.createTextOutput(s); }
