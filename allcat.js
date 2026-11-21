@@ -3,7 +3,7 @@
 (function () {
   var root = document.getElementById("all");
   if (!root) return;
-  var PHOTO = "https://parfumoteka-opt.ru/media/photos/"; // фото берём с сайта поставщика
+  var PHOTO = "https://parfumoteka.parfspace.ru/media/opt/"; // фото берём с витрины поставщика
   var STEP = 24;
   var input = root.querySelector(".all-search input");
   var letters = root.querySelector(".letters");
@@ -64,7 +64,7 @@
     loading = fetch("data/all.json?v=" + (root.dataset.v || "1"))
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(function (d) {
-        d.hay = d.items.map(function (it) { return norm(d.brands[it[0]][0] + " " + it[1] + " " + it[2]); });
+        d.hay = d.items.map(function (it) { return norm(d.brands[it[0]][0] + " " + it[1] + " " + it[2] + " " + (it[7] || "")); });
         data = d;
         root.querySelector("[data-all-count]").textContent = d.items.length.toLocaleString("ru-RU");
         root.querySelector("[data-brand-count]").textContent = d.brands.length.toLocaleString("ru-RU");
@@ -132,9 +132,9 @@
     var w0 = vs[vs.length - 1].split(" ")[0].slice(0, 5);
     function rank(k) {
       var it = data.items[k];
-      return (norm(data.brands[it[0]][0]).indexOf(w0) === 0 ? 2 : 0) + (norm(it[1]).indexOf(w0) === 0 ? 1 : 0);
+      return norm(data.brands[it[0]][0]).indexOf(w0) === 0 ? 2 : norm(it[1]).indexOf(w0) === 0 ? 1 : 0;
     }
-    list.sort(function (a, b) { return rank(b) - rank(a) || hasPhoto(b) - hasPhoto(a) || a - b; });
+    list.sort(function (a, b) { return rank(b) - rank(a) || hasPhoto(b) - hasPhoto(a) || data.items[a][1].length - data.items[b][1].length || a - b; }); // короткие названия (сам аромат) выше длинных (наборы)
     status.textContent = list.length ? "Нашли " + list.length + " " + plural(list.length) : "Ничего не нашли. Напишите нам название – проверим у поставщиков.";
     show(true);
   }
@@ -205,13 +205,18 @@
     } else bottle(ph, b, it[1]);
     ph.appendChild(el("span", "tag", "Под заказ"));
     var body = el("div", "body");
-    body.append(el("span", "brand", b), el("h3", "name", it[1]), el("p", "meta", it[2] + (it[5] ? " · есть тестер" : "")));
+    var sex = { W: "женский", M: "мужской", U: "унисекс" }[it[6]];
+    body.append(el("span", "brand", b), el("h3", "name", it[1]));
+    if (it[7]) body.appendChild(el("p", "notes", it[7]));
+    body.appendChild(el("p", "meta", [it[2], sex, it[5] ? "есть тестер" : ""].filter(Boolean).join(" · ")));
     var sel = null;
     if (vols.length) {
       sel = el("select", "vol");
       sel.setAttribute("aria-label", "Объём");
       vols.forEach(function (v) { var o = el("option", "", v); o.value = v; sel.appendChild(o); });
-      sel.value = vols.indexOf("100 мл") !== -1 ? "100 мл" : vols[vols.length - 1];
+      // по умолчанию – флакон 100 мл, если он есть, иначе самый большой флакон, иначе последний вариант
+      var bottles = vols.filter(function (v) { return v.indexOf("·") === -1; });
+      sel.value = vols.indexOf("100 мл") !== -1 ? "100 мл" : bottles.length ? bottles[bottles.length - 1] : vols[vols.length - 1];
       body.appendChild(sel);
     }
     var foot = el("div", "foot"), price = el("div", "price");
