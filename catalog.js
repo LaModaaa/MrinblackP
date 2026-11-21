@@ -14,7 +14,7 @@
   function shown() {
     return items.filter(function (it) {
       return (section === "Все" || it.section === section) && (sex === "Все" || it.sex === sex) &&
-        (!query || (it.brand + " " + it.title + " " + it.type).toLowerCase().indexOf(query) !== -1);
+        (!query || (it.brand + " " + it.title + " " + it.type + " " + it.notes + " " + it.family).toLowerCase().indexOf(query) !== -1);
     });
   }
   function visible() {
@@ -44,7 +44,7 @@
 
   // Столбцы ищем по названию – порядок в таблице не важен
   var COLUMNS = {
-    section: ["раздел"], brand: ["бренд"], title: ["название", "аромат"], type: ["тип"], sex: ["для кого", "пол"],
+    section: ["раздел"], brand: ["бренд"], title: ["название", "аромат"], type: ["тип"], sex: ["для кого", "пол"], family: ["характер", "семейство"], notes: ["ноты"],
     vol: ["объём", "объем"], price: ["цена", "стоимость"], photo: ["фото", "картинка"], badge: ["метка", "значок"], stock: ["в наличии", "наличие"],
   };
   function toItems(rows) {
@@ -56,7 +56,7 @@
     return rows.slice(1).map(function (r) {
       var it = {
         section: get(r, "section") || "Под заказ", brand: get(r, "brand"), title: get(r, "title"), type: get(r, "type"),
-        sex: get(r, "sex"), vol: get(r, "vol"), badge: get(r, "badge"), photo: get(r, "photo"),
+        sex: get(r, "sex"), family: get(r, "family"), notes: get(r, "notes"), vol: get(r, "vol"), badge: get(r, "badge"), photo: get(r, "photo"),
         price: Number(get(r, "price").replace(/[^\d,.]/g, "").replace(",", ".")) || 0,
         inStock: !/^(нет|-|0|no)$/i.test(get(r, "stock")),
       };
@@ -95,7 +95,7 @@
     if (!q) {
       var b = el("button", "btn small", it.section === "Разлив" ? "В корзину" : "Заказать");
       b.type = "button";
-      b.onclick = function () { Cart.add(it); };
+      b.onclick = function () { document.dispatchEvent(new CustomEvent("fx:spray", { detail: b })); Cart.add(it); };
       box.appendChild(b);
     } else {
       var s = el("div", "stepper");
@@ -104,7 +104,7 @@
       minus.setAttribute("aria-label", "Меньше");
       plus.setAttribute("aria-label", "Больше");
       minus.onclick = function () { Cart.change(it.name, -1); };
-      plus.onclick = function () { Cart.change(it.name, 1); };
+      plus.onclick = function () { document.dispatchEvent(new CustomEvent("fx:spray", { detail: plus })); Cart.change(it.name, 1); };
       s.append(minus, el("span", "", q + " шт"), plus);
       box.appendChild(s);
     }
@@ -136,6 +136,7 @@
       var body = el("div", "body");
       body.appendChild(el("span", "brand", it.brand));
       body.appendChild(el("h3", "name", it.title));
+      if (it.notes) body.appendChild(el("p", "notes", it.notes));
       body.appendChild(el("p", "meta", [it.type, it.vol].filter(Boolean).join(" · ")));
       var foot = el("div", "foot");
       foot.append(el("div", "price" + (it.price ? "" : " ask"), it.price ? CartCore.money(it.price) : "Цена по запросу"), buyBox(it));
@@ -157,6 +158,7 @@
     cards.forEach(function (c, i) { if (list[i]) c.querySelector(".buy").replaceWith(buyBox(list[i])); });
   });
   if (search) search.addEventListener("input", function () { query = search.value.trim().toLowerCase(); render(); });
+  window.CatalogBuyBox = buyBox; // та же кнопка для подбора аромата
   // Фильтр по разделу из внешних кнопок (блок «Два формата»)
   window.CatalogShow = function (v) { section = v; showAll = false; render(); };
   function ready() { window.CATALOG_ITEMS = items; document.dispatchEvent(new Event("catalog:ready")); }
